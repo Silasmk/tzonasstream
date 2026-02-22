@@ -1,5 +1,5 @@
-const supabaseUrl = 'DEINE_SUPABASE_URL';
-const supabaseKey = 'DEIN_SUPABASE_ANON_KEY';
+const supabaseUrl = 'https://mhfuxvyzkoiuhelivqsg.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1oZnV4dnl6a29pdWhlbGl2cXNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3NjU4MTUsImV4cCI6MjA4NzM0MTgxNX0.HLhl_BR_7srww2oB1_abWU-UISnMkx40Fo-5WR2Of3s';
 const supabase = supabaseClient.createClient(supabaseUrl, supabaseKey);
 
 const container = document.getElementById("buttonContainer");
@@ -70,5 +70,6 @@ supabase
     loadPlayers();
   })
   .subscribe();
+
 
 loadPlayers();
