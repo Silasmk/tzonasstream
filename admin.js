@@ -75,11 +75,16 @@ async function addPlayer() {
 }
 
 // Alle Spieler löschen (Jetzt mit korrekter ID-Abfrage!)
+// Alle Spieler löschen (Repariert)
 async function deleteAllPlayers() {
     if(confirm("Bist du sicher, dass du ALLE Spieler löschen willst?")) {
-        // Löscht alle Spieler, deren ID größer als 0 ist (also alle)
-        const { error } = await db.from('players').delete().gt('id', 0);
-        if (error) console.error("Fehler beim Löschen:", error);
+        // Der reparierte Befehl: "Lösche alle Reihen, bei denen die ID nicht null ist" (also alle)
+        const { error } = await db.from('players').delete().not('id', 'is', null);
+        
+        if (error) {
+            console.error("Fehler beim Löschen:", error);
+            alert("Fehler beim Löschen! Schau in die Konsole.");
+        }
     }
 }
 
@@ -91,4 +96,5 @@ db.channel('public:players')
   .subscribe();
 
 loadPlayers();
+
 
