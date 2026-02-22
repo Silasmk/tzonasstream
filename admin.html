@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>StreamText - ADMIN</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="admin.js" defer></script>
+</head>
+<body>
+    <div>
+        <div>
+            <h1 onclick="addPlayer()" id="hint">Spieler Erstellen</h1>
+            <h1 onclick="deleteAllPlayers()" style="color: red; cursor: pointer;">ALLE SPIELER LÖSCHEN</h1>
+        </div>
+        <input id="input" placeholder="Name eingeben...">
+    </div>
+    <span style="display:block; height: 60px;"></span>
+    <div id="buttonContainer"></div>
+</body>
+</html>
