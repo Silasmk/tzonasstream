@@ -1,16 +1,15 @@
 const supabaseUrl = 'https://mhfuxvyzkoiuhelivqsg.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1oZnV4dnl6a29pdWhlbGl2cXNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3NjU4MTUsImV4cCI6MjA4NzM0MTgxNX0.HLhl_BR_7srww2oB1_abWU-UISnMkx40Fo-5WR2Of3s';
-// HIER IST DIE ÄNDERUNG: Wir nennen es jetzt "db" statt "supabase"
+
 const db = supabase.createClient(supabaseUrl, supabaseKey);
 
 const container = document.getElementById("buttonContainer");
-let currentPlayers = [];
 
 // Spieler laden
 async function loadPlayers() {
-    const { data: players } = await db.from('players').select('*').order('created_at', { ascending: true });
-    currentPlayers = players || [];
-    renderPlayers(currentPlayers);
+    const { data: players, error } = await db.from('players').select('*').order('created_at', { ascending: true });
+    if (error) console.error("Fehler beim Laden:", error);
+    renderPlayers(players || []);
 }
 
 // Spieler zeichnen (MIT Klick-Funktionen)
@@ -30,13 +29,19 @@ function renderPlayers(players) {
         
         // Linksklick: Plus 1
         playerDiv.onclick = async function() {
-            await db.from('players').update({ score: player.score + 1 }).eq('id', player.id);
+            player.score += 1; // Zahl sofort auf dem Bildschirm ändern
+            counter.textContent = player.score;
+            const { error } = await db.from('players').update({ score: player.score }).eq('id', player.id);
+            if (error) console.error("Fehler beim Plus-Rechnen:", error);
         };
         
         // Rechtsklick: Minus 1
         playerDiv.oncontextmenu = async function(event) {
-            event.preventDefault();
-            await db.from('players').update({ score: player.score - 1 }).eq('id', player.id);
+            event.preventDefault(); // Verhindert das Browser-Menü
+            player.score -= 1; // Zahl sofort auf dem Bildschirm ändern
+            counter.textContent = player.score;
+            const { error } = await db.from('players').update({ score: player.score }).eq('id', player.id);
+            if (error) console.error("Fehler beim Minus-Rechnen:", error);
         };
 
         playerDiv.appendChild(label);
@@ -51,7 +56,8 @@ async function addPlayer() {
     const playerName = inputField.value.trim();
 
     if (playerName !== "") {
-        await db.from('players').insert([{ name: playerName, score: 0 }]);
+        const { error } = await db.from('players').insert([{ name: playerName, score: 0 }]);
+        if (error) console.error("Fehler beim Erstellen:", error);
         inputField.value = "";
     }
 }
@@ -59,13 +65,16 @@ async function addPlayer() {
 // Alle Spieler löschen
 async function deleteAllPlayers() {
     if(confirm("Bist du sicher, dass du ALLE Spieler löschen willst?")) {
-        await db.from('players').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        // Sichere Methode, um wirklich alle zu löschen
+        const { error } = await db.from('players').delete().not('id', 'is', null);
+        if (error) console.error("Fehler beim Löschen:", error);
     }
 }
 
 // Echtzeit-Updates empfangen
 db.channel('public:players')
   .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, payload => {
+    // Nur neu laden, wenn es nicht von uns selbst kommt, sonst flackert es
     loadPlayers();
   })
   .subscribe();
