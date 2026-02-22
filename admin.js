@@ -12,40 +12,52 @@ async function loadPlayers() {
     renderPlayers(players || []);
 }
 
-// Spieler zeichnen (MIT Klick-Funktionen)
+// Spieler zeichnen (mit sichtbaren + und - Buttons)
 function renderPlayers(players) {
     container.innerHTML = "";
     players.forEach(player => {
+        // Container für den Spieler
+        const playerDiv = document.createElement("div");
+        playerDiv.className = "border";
+        
+        // Name
         const label = document.createElement("button");
         label.className = "plain1";
         label.textContent = player.name;
 
+        // Minus-Button
+        const btnMinus = document.createElement("button");
+        btnMinus.className = "plain2"; // Wir nutzen dein bestehendes Design
+        btnMinus.textContent = "-";
+        btnMinus.style.cursor = "pointer"; // Zeigt die "Klick-Hand"
+        btnMinus.onclick = async function() {
+            player.score -= 1; 
+            counter.textContent = player.score; // Sofort im Browser ändern
+            await db.from('players').update({ score: player.score }).eq('id', player.id);
+        };
+
+        // Punktestand (Zähler)
         const counter = document.createElement("h3");
-        counter.className = "plain2";
+        counter.className = "plain1"; // Nur Text, kein Button-Hintergrund für die Zahl
         counter.textContent = player.score;
+        counter.style.margin = "0 10px"; // Ein bisschen Abstand links und rechts
 
-        const playerDiv = document.createElement("div");
-        playerDiv.className = "border";
-        
-        // Linksklick: Plus 1
-        playerDiv.onclick = async function() {
-            player.score += 1; // Zahl sofort auf dem Bildschirm ändern
-            counter.textContent = player.score;
-            const { error } = await db.from('players').update({ score: player.score }).eq('id', player.id);
-            if (error) console.error("Fehler beim Plus-Rechnen:", error);
-        };
-        
-        // Rechtsklick: Minus 1
-        playerDiv.oncontextmenu = async function(event) {
-            event.preventDefault(); // Verhindert das Browser-Menü
-            player.score -= 1; // Zahl sofort auf dem Bildschirm ändern
-            counter.textContent = player.score;
-            const { error } = await db.from('players').update({ score: player.score }).eq('id', player.id);
-            if (error) console.error("Fehler beim Minus-Rechnen:", error);
+        // Plus-Button
+        const btnPlus = document.createElement("button");
+        btnPlus.className = "plain2";
+        btnPlus.textContent = "+";
+        btnPlus.style.cursor = "pointer";
+        btnPlus.onclick = async function() {
+            player.score += 1;
+            counter.textContent = player.score; // Sofort im Browser ändern
+            await db.from('players').update({ score: player.score }).eq('id', player.id);
         };
 
+        // Alles in der richtigen Reihenfolge zusammenbauen
         playerDiv.appendChild(label);
+        playerDiv.appendChild(btnMinus);
         playerDiv.appendChild(counter);
+        playerDiv.appendChild(btnPlus);
         container.appendChild(playerDiv);
     });
 }
@@ -62,11 +74,11 @@ async function addPlayer() {
     }
 }
 
-// Alle Spieler löschen
+// Alle Spieler löschen (Jetzt mit korrekter ID-Abfrage!)
 async function deleteAllPlayers() {
     if(confirm("Bist du sicher, dass du ALLE Spieler löschen willst?")) {
-        // Sichere Methode, um wirklich alle zu löschen
-        const { error } = await db.from('players').delete().not('id', 'is', null);
+        // Löscht alle Spieler, deren ID größer als 0 ist (also alle)
+        const { error } = await db.from('players').delete().gt('id', 0);
         if (error) console.error("Fehler beim Löschen:", error);
     }
 }
@@ -74,9 +86,9 @@ async function deleteAllPlayers() {
 // Echtzeit-Updates empfangen
 db.channel('public:players')
   .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, payload => {
-    // Nur neu laden, wenn es nicht von uns selbst kommt, sonst flackert es
     loadPlayers();
   })
   .subscribe();
 
 loadPlayers();
+
